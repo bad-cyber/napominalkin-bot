@@ -503,7 +503,13 @@
                 // Отправляем данные в Telegram бот
                 if (window.Telegram && window.Telegram.WebApp) {
                     window.Telegram.WebApp.sendData(JSON.stringify(reminderData));
-                    this.showNotification('Напоминание создано! Бот обработает его.', 'success');
+                    this.showNotification('Напоминание создано! Закрываю приложение...', 'success');
+                    
+                    // Закрываем Web App через короткую задержку
+                    setTimeout(() => {
+                        window.Telegram.WebApp.close();
+                    }, 1500);
+                    
                     this.resetForm();
                 } else {
                     // Локальное сохранение для тестирования
@@ -668,18 +674,8 @@
             }
 
             triggerReminder(reminder) {
-                // Имитация отправки уведомления
-                const username = 'Друг'; // В реальном боте это будет имя пользователя
-                const message = `Привет, это я, Напоминалкин! Помнишь то что ты указал "${reminder.text}"? Так вот, напоминаю тебе, что это нужно сделать сегодня. Хорошего тебе дня, ${username}!`;
-                
-                this.showNotification(message, 'reminder');
-                
-                // Для одноразовых напоминаний отключаем их после срабатывания
-                if (reminder.repeat === 'none') {
-                    reminder.active = false;
-                    this.saveReminders();
-                    this.renderReminders();
-                }
+                // Эта функция больше не используется, так как уведомления отправляются сервером
+                // Оставлена для совместимости, но не делает ничего
             }
         }
 
@@ -703,10 +699,8 @@
         // Инициализация приложения
         const app = new ReminderApp();
 
-        // Проверка напоминаний каждую минуту (в реальном боте это будет серверная задача)
-        setInterval(() => {
-            app.checkReminders();
-        }, 60000);
+        // Проверка напоминаний теперь выполняется сервером (ботом)
+        // Локальная проверка отключена
 
         // CSS для дополнительных стилей уведомлений
         const additionalStyles = `

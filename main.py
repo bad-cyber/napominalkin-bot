@@ -3,7 +3,6 @@ import logging
 import asyncio
 import json
 import datetime
-import aioschedule as schedule
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
@@ -111,7 +110,7 @@ async def cmd_start(message: types.Message):
 Я — Напоминалкин, твой личный помощник для напоминаний!
 
 ✨ Возможности:
-• Создание напоминаний с красивым интерфейсом
+• Создание напоминаний с красивым интерфейс
 • Повторяющиеся напоминания (ежедневно, еженедельно, выборочные дни)
 • Просмотр всех активных напоминаний
 • Уведомления в назначенное время
@@ -120,6 +119,12 @@ async def cmd_start(message: types.Message):
     """
     
     await message.answer(welcome_text, reply_markup=get_main_keyboard())
+
+# Команда удаления вебхука
+@dp.message(Command("delete_webhook"))
+async def cmd_delete_webhook(message: types.Message):
+    await bot.delete_webhook()
+    await message.answer("✅ Вебхук удален. Теперь бот может работать в режиме опроса.")
 
 # Команда помощи
 @dp.message(Command("help"))
@@ -132,6 +137,7 @@ async def cmd_help(message: types.Message):
 /start - Начать работу с ботом
 /help - Показать эту справку
 /my_reminders - Показать мои напоминания
+/delete_webhook - Удалить вебхук (если бот не работает)
 
 <b>Как использовать:</b>
 1. Нажмите кнопку "📱 Открыть приложение"
@@ -160,7 +166,8 @@ async def show_reminders(message: types.Message):
         await message.answer("📭 У вас пока нет активных напоминаний!\n\nНажмите кнопку '📱 Открыть приложение' чтобы создать первое напоминание.")
         return
     
-    text = "📋 <b>Ваши напоминания:</b>\n\n"
+    # Сначала отправляем заголовок
+    await message.answer("📋 <b>Ваши напоминания:</b>", parse_mode=ParseMode.HTML)
     
     for reminder in reminders[:10]:  # Ограничиваем показ 10 напоминаниями
         dt = datetime.datetime.fromisoformat(reminder['datetime'])
@@ -181,7 +188,7 @@ async def show_reminders(message: types.Message):
         
         status = "✅ Активно" if reminder.get('active', True) else "⏸️ Приостановлено"
         
-        text += f"""
+        reminder_text = f"""
 📝 <b>{reminder['text']}</b>
 📅 {formatted_date} ⏰ {formatted_time}
 {repeat_text}
@@ -198,8 +205,7 @@ async def show_reminders(message: types.Message):
         builder.button(text="🗑️ Удалить", callback_data=f"delete_{reminder['id']}")
         builder.adjust(2)
         
-        await message.answer(text, parse_mode=ParseMode.HTML, reply_markup=builder.as_markup())
-        text = ""  # Сбрасываем текст для следующего сообщения
+        await message.answer(reminder_text, parse_mode=ParseMode.HTML, reply_markup=builder.as_markup())
     
     if len(reminders) > 10:
         await message.answer(f"📖 И ещё {len(reminders) - 10} напоминаний...\nИспользуйте приложение для полного просмотра.")
@@ -285,7 +291,8 @@ async def handle_web_app_data(message: types.Message):
 # Функции для планировщика напоминаний
 async def check_reminders():
     """Проверяет и отправляет напоминания"""
-    now = datetime.datetime.now()
+    now = datetime.datetime.now() 
+    logger.info("Checking reminders...")
     
     for reminder in db.reminders:
         if not reminder.get('active', True):
@@ -304,22 +311,35 @@ async def check_reminders():
 
 def should_send_reminder(now, reminder_time, reminder):
     """Определяет, нужно ли отправлять напоминание"""
+    logger.info(f"Checking reminder: {reminder['text']}")
+    logger.info(f"Now: {now}, Reminder time: {reminder_time}")
+    logger.info(f"Repeat type: {reminder.get('repeat')}")
+    
     if reminder.get('repeat') == 'none':
         # Для одноразовых - проверяем точное время
-        return now.strftime("%Y-%m-%d %H:%M") == reminder_time.strftime("%Y-%m-%d %H:%M")
+        result = now.strftime("%Y-%m-%d %H:%M") == reminder_time.strftime("%Y-%m-%d %H:%M")
+        logger.info(f"One-time check result: {result}")
+        return result
     
     elif reminder.get('repeat') == 'daily':
         # Ежедневно - проверяем время
-        return now.time() == reminder_time.time()
+        result = now.time() == reminder_time.time()
+        logger.info(f"Daily check result: {result}")
+        return result
     
     elif reminder.get('repeat') == 'weekly':
         # Еженедельно - проверяем день недели и время
-        return now.weekday() == reminder_time.weekday() and now.time() == reminder_time.time()
+        result = now.weekday() == reminder_time.weekday() and now.time() == reminder_time.time()
+        logger.info(f"Weekly check result: {result}")
+        return result
     
     elif reminder.get('repeat') == 'custom' and reminder.get('days'):
         # Выбранные дни - проверяем день недели и время
-        return now.weekday() in reminder['days'] and now.time() == reminder_time.time()
+        result = now.weekday() in reminder['days'] and now.time() == reminder_time.time()
+        logger.info(f"Custom days check result: {result}")
+        return result
     
+    logger.info("No matching repeat type found")
     return False
 
 async def send_reminder_notification(user_id, reminder):
@@ -346,11 +366,9 @@ async def send_reminder_notification(user_id, reminder):
 # Настройка планировщика
 async def scheduler():
     """Запускает планировщик напоминаний"""
-    schedule.every().minute.do(check_reminders)
-    
     while True:
-        await schedule.run_pending()
-        await asyncio.sleep(1)
+        await check_reminders()
+        await asyncio.sleep(30)  # Проверяем каждые 30 секунд
 
 # Запуск бота
 async def main():
