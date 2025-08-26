@@ -89,7 +89,7 @@ db = Database()
 def get_main_keyboard():
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="📱 Открыть приложение", web_app=WebAppInfo(url="https://telegram-web-app-host.com/napominalkin-bot/code.html"))],
+            [KeyboardButton(text="📱 Открыть приложение", web_app=WebAppInfo(url="https://bad-cyber.github.io/napominalkin-bot/code.html"))],
             [KeyboardButton(text="📋 Мои напоминания"), KeyboardButton(text="❓ Помощь")]
         ],
         resize_keyboard=True
