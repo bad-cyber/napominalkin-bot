@@ -1,0 +1,30 @@
+# Исключаем ненужные файлы из Docker образа
+.git
+.gitignore
+.env
+*.log
+*.pyc
+__pycache__
+venv
+.venv
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Исключаем тестовые файлы
+test_*
+README.md
+DEPLOYMENT_GUIDE.md
+start.bat
+
+# Исключаем данные, которые будут в volumes
+data/
+logs/

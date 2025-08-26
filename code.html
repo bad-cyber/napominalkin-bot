@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Напоминалкин - Бот Напоминаний</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 430px;
+            margin: 0 auto;
+            background: #fff;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: #fff;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e9ecef;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+
+        .repeat-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .repeat-option {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .repeat-option.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .days-selector {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .day-btn {
+            padding: 12px 8px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .day-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .reminder-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease;
+        }
+
+        .reminder-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .reminder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .reminder-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.4;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .reminder-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .reminder-details {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .reminder-time {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .reminder-repeat {
+            background: #f8f9fa;
+            color: #666;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .floating-add {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
+        .floating-add:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 430px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .floating-add {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-bell"></i> Напоминалкин</h1>
+            <div class="subtitle">Твой личный помощник напоминаний</div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('create')">
+                <i class="fas fa-plus"></i> Создать
+            </button>
+            <button class="nav-tab" onclick="switchTab('reminders')">
+                <i class="fas fa-list"></i> Напоминания
+            </button>
+        </div>
+
+        <div id="create-tab" class="tab-content active">
+            <form id="reminder-form">
+                <div class="form-group">
+                    <label class="form-label">Текст напоминания</label>
+                    <textarea class="form-control textarea" id="reminder-text" placeholder="О чём тебе напомнить?" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Дата и время</label>
+                    <input type="datetime-local" class="form-control" id="reminder-datetime" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Повторение</label>
+                    <div class="repeat-options">
+                        <div class="repeat-option active" data-value="none">
+                            <i class="fas fa-clock"></i><br>Один раз
+                        </div>
+                        <div class="repeat-option" data-value="daily">
+                            <i class="fas fa-redo"></i><br>Ежедневно
+                        </div>
+                        <div class="repeat-option" data-value="weekly">
+                            <i class="fas fa-calendar-week"></i><br>Еженедельно
+                        </div>
+                        <div class="repeat-option" data-value="custom">
+                            <i class="fas fa-cog"></i><br>Выбрать дни
+                        </div>
+                    </div>
+                </div>
+
+                <div id="days-selector" class="form-group" style="display: none;">
+                    <label class="form-label">Выберите дни недели</label>
+                    <div class="days-selector">
+                        <div class="day-btn" data-day="1">Пн</div>
+                        <div class="day-btn" data-day="2">Вт</div>
+                        <div class="day-btn" data-day="3">Ср</div>
+                        <div class="day-btn" data-day="4">Чт</div>
+                        <div class="day-btn" data-day="5">Пт</div>
+                        <div class="day-btn" data-day="6">Сб</div>
+                        <div class="day-btn" data-day="0">Вс</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Создать напоминание
+                </button>
+            </form>
+        </div>
+
+        <div id="reminders-tab" class="tab-content">
+            <div id="reminders-list"></div>
+        </div>
+    </div>
+
+    <div class="floating-add" onclick="switchTab('create')" style="display: none;">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        class ReminderApp {
+            constructor() {
+                this.reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+                this.currentTab = 'create';
+                this.selectedDays = [];
+                this.selectedRepeat = 'none';
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.renderReminders();
+                this.setMinDateTime();
+            }
+
+            setupEventListeners() {
+                // Форма создания напоминания
+                document.getElementById('reminder-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.createReminder();
+                });
+
+                // Опции повторения
+                document.querySelectorAll('.repeat-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        document.querySelectorAll('.repeat-option').forEach(o => o.classList.remove('active'));
+                        option.classList.add('active');
+                        this.selectedRepeat = option.dataset.value;
+                        
+                        const daysSelector = document.getElementById('days-selector');
+                        daysSelector.style.display = this.selectedRepeat === 'custom' ? 'block' : 'none';
+                    });
+                });
+
+                // Выбор дней недели
+                document.querySelectorAll('.day-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        btn.classList.toggle('active');
+                        const day = parseInt(btn.dataset.day);
+                        
+                        if (this.selectedDays.includes(day)) {
+                            this.selectedDays = this.selectedDays.filter(d => d !== day);
+                        } else {
+                            this.selectedDays.push(day);
+                        }
+                    });
+                });
+            }
+
+            setMinDateTime() {
+                const now = new Date();
+                const min = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                document.getElementById('reminder-datetime').min = min;
+            }
+
+            createReminder() {
+                const text = document.getElementById('reminder-text').value;
+                const datetime = document.getElementById('reminder-datetime').value;
+                
+                if (!text || !datetime) {
+                    this.showNotification('Заполните все поля!', 'error');
+                    return;
+                }
+
+                const reminderData = {
+                    text: text,
+                    datetime: datetime,
+                    repeat: this.selectedRepeat,
+                    days: this.selectedDays.length > 0 ? [...this.selectedDays] : null
+                };
+
+                // Отправляем данные в Telegram бот
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.sendData(JSON.stringify(reminderData));
+                    this.showNotification('Напоминание создано! Бот обработает его.', 'success');
+                    this.resetForm();
+                } else {
+                    // Локальное сохранение для тестирования
+                    const reminder = {
+                        id: Date.now(),
+                        ...reminderData,
+                        created: new Date().toISOString(),
+                        active: true
+                    };
+
+                    this.reminders.push(reminder);
+                    this.saveReminders();
+                    this.renderReminders();
+                    this.resetForm();
+                    this.showNotification('Напоминание создано! (локальный режим)', 'success');
+                    
+                    // Переключаемся на вкладку напоминаний
+                    switchTab('reminders');
+                }
+            }
+
+            deleteReminder(id) {
+                this.reminders = this.reminders.filter(r => r.id !== id);
+                this.saveReminders();
+                this.renderReminders();
+                this.showNotification('Напоминание удалено!', 'success');
+            }
+
+            toggleReminder(id) {
+                const reminder = this.reminders.find(r => r.id === id);
+                if (reminder) {
+                    reminder.active = !reminder.active;
+                    this.saveReminders();
+                    this.renderReminders();
+                    this.showNotification(reminder.active ? 'Напоминание включено!' : 'Напоминание отключено!', 'success');
+                }
+            }
+
+            resetForm() {
+                document.getElementById('reminder-form').reset();
+                this.selectedDays = [];
+                this.selectedRepeat = 'none';
+                
+                // Сброс выбора повторения
+                document.querySelectorAll('.repeat-option').forEach(o => o.classList.remove('active'));
+                document.querySelector('.repeat-option[data-value="none"]').classList.add('active');
+                
+                // Сброс дней недели
+                document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('days-selector').style.display = 'none';
+                
+                this.setMinDateTime();
+            }
+
+            renderReminders() {
+                const container = document.getElementById('reminders-list');
+                
+                if (this.reminders.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-bell-slash"></i>
+                            <h3>Нет напоминаний</h3>
+                            <p>Создайте своё первое напоминание!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const sortedReminders = this.reminders.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+                
+                container.innerHTML = sortedReminders.map(reminder => {
+                    const datetime = new Date(reminder.datetime);
+                    const formatDate = datetime.toLocaleDateString('ru-RU');
+                    const formatTime = datetime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                    
+                    let repeatText = '';
+                    switch(reminder.repeat) {
+                        case 'daily':
+                            repeatText = 'Ежедневно';
+                            break;
+                        case 'weekly':
+                            repeatText = 'Еженедельно';
+                            break;
+                        case 'custom':
+                            const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+                            repeatText = reminder.days.map(d => dayNames[d]).join(', ');
+                            break;
+                        default:
+                            repeatText = 'Один раз';
+                    }
+
+                    const isExpired = new Date() > datetime && reminder.repeat === 'none';
+                    const cardClass = reminder.active ? 'reminder-card' : 'reminder-card' + (isExpired ? ' expired' : '');
+
+                    return `
+                        <div class="${cardClass}" style="${!reminder.active ? 'opacity: 0.6;' : ''}">
+                            <div class="reminder-header">
+                                <div class="reminder-text">${reminder.text}</div>
+                                <div class="reminder-actions">
+                                    <button class="btn btn-secondary" onclick="app.toggleReminder(${reminder.id})">
+                                        <i class="fas fa-${reminder.active ? 'pause' : 'play'}"></i>
+                                    </button>
+                                    <button class="btn btn-danger" onclick="app.deleteReminder(${reminder.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="reminder-details">
+                                <span class="reminder-time">
+                                    <i class="fas fa-clock"></i> ${formatDate} в ${formatTime}
+                                </span>
+                                <span class="reminder-repeat">
+                                    <i class="fas fa-redo"></i> ${repeatText}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            saveReminders() {
+                localStorage.setItem('reminders', JSON.stringify(this.reminders));
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification show ${type}`;
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+
+            // Проверка напоминаний (имитация)
+            checkReminders() {
+                const now = new Date();
+                
+                this.reminders.forEach(reminder => {
+                    if (!reminder.active) return;
+                    
+                    const reminderTime = new Date(reminder.datetime);
+                    
+                    // Простая проверка времени (в реальном боте это будет серверная логика)
+                    if (this.shouldTriggerReminder(now, reminderTime, reminder)) {
+                        this.triggerReminder(reminder);
+                    }
+                });
+            }
+
+            shouldTriggerReminder(now, reminderTime, reminder) {
+                // Упрощённая логика для демонстрации
+                const timeDiff = Math.abs(now - reminderTime);
+                
+                if (reminder.repeat === 'none') {
+                    return timeDiff < 60000; // В пределах минуты
+                }
+                
+                // Для повторяющихся напоминаний проверяем время дня
+                return now.getHours() === reminderTime.getHours() && 
+                       now.getMinutes() === reminderTime.getMinutes();
+            }
+
+            triggerReminder(reminder) {
+                // Имитация отправки уведомления
+                const username = 'Друг'; // В реальном боте это будет имя пользователя
+                const message = `Привет, это я, Напоминалкин! Помнишь то что ты указал "${reminder.text}"? Так вот, напоминаю тебе, что это нужно сделать сегодня. Хорошего тебе дня, ${username}!`;
+                
+                this.showNotification(message, 'reminder');
+                
+                // Для одноразовых напоминаний отключаем их после срабатывания
+                if (reminder.repeat === 'none') {
+                    reminder.active = false;
+                    this.saveReminders();
+                    this.renderReminders();
+                }
+            }
+        }
+
+        // Функция переключения вкладок
+        function switchTab(tabName) {
+            // Обновляем навигацию
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            
+            // Обновляем контент
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Показываем/скрываем кнопку добавления
+            const floatingAdd = document.querySelector('.floating-add');
+            floatingAdd.style.display = tabName === 'reminders' ? 'flex' : 'none';
+            
+            app.currentTab = tabName;
+        }
+
+        // Инициализация приложения
+        const app = new ReminderApp();
+
+        // Проверка напоминаний каждую минуту (в реальном боте это будет серверная задача)
+        setInterval(() => {
+            app.checkReminders();
+        }, 60000);
+
+        // CSS для дополнительных стилей уведомлений
+        const additionalStyles = `
+            .notification.reminder {
+                background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+                max-width: 350px;
+                white-space: pre-wrap;
+                line-height: 1.4;
+            }
+            
+            .notification.error {
+                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            }
+            
+            .expired {
+                border-left: 4px solid #ff6b6b;
+            }
+        `;
+        
+        const styleSheet = document.createElement("style");
+        styleSheet.textContent = additionalStyles;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>
+

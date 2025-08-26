@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  napominalkin-bot:
+    build: .
+    container_name: napominalkin-bot
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - TZ=Europe/Moscow
+    env_file:
+      - .env
+    networks:
+      - napominalkin-net
+    # Ограничиваем ресурсы для безопасности
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+networks:
+  napominalkin-net:
+    driver: bridge
+    # Изолируем сеть для безопасности
+    internal: false
+
+volumes:
+  data:
+    driver: local
+  logs:
+    driver: local

@@ -1,0 +1,4 @@
+aiogram>=3.22.0
+python-dotenv==1.0.0
+aioschedule>=0.5.2
+aiohttp>=3.12.15
